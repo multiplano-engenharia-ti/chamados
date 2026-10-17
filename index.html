@@ -1558,6 +1558,7 @@ const DEV=(()=>{ if(!(WEBCFG&&WEBCFG.dev)||!/^(localhost|127\.0\.0\.1)$/.test(lo
 const apiBase=()=>String((WEBCFG&&WEBCFG.apiUrl)||"").replace(/\/+$/,"");
 async function API(method,path,body){
   const h={"Content-Type":"application/json"};
+  if(body==null&&/^(POST|PUT|PATCH)$/.test(method))body={};   // a API na Azure recusa POST sem corpo como JSON inválido
   if(DEV)h["X-Dev-User"]=JSON.stringify(DEV); else h.Authorization="Bearer "+await webToken();
   for(let i=0;;i++){
     let r;
@@ -2221,7 +2222,7 @@ async function cfgSituacao(el){
         <p class="note" style="margin-top:10px">Configuradas nas variáveis da Function App (guia de produção).</p></div>
       <div class="card"><h3>Notificações</h3><dl class="dl"><dt>Enviadas</dt><dd>${fmtN(nc.enviada||0)}</dd><dt>Na fila</dt><dd>${fmtN(nc.pendente||0)}</dd><dt>Com erro</dt><dd>${nc.erro?`<b style="color:var(--bad)">${fmtN(nc.erro)}</b>`:"0"}</dd><dt>Ignoradas</dt><dd>${fmtN(nc.ignorada||0)} <span class="note">(integração não configurada)</span></dd></dl></div>
     </div>
-    <div class="card" style="margin-top:14px"><h3>Rotinas automáticas</h3><p class="sub">Notificações a cada 2 min · resumo de prazos 8h30 (seg–sex) · fechamento automático 7h · backup 2h</p>
+    <div class="card" style="margin-top:14px"><h3>Rotinas automáticas</h3><p class="sub">Notificações a cada 5 min · resumo de prazos 8h30 (seg–sex) · fechamento automático 7h · backup 2h</p>
       <div class="tw"><table><thead><tr><th>Rotina</th><th>Início</th><th>Resultado</th><th>Detalhe</th></tr></thead><tbody>${(s.execucoes||[]).map(x=>`<tr><td>${esc(x.rotina)}</td><td class="num">${fmtDT(x.inicio)}</td><td>${x.ok==null?'<span class="pill p-neu">em execução</span>':okPill(x.ok,"ok","falhou")}</td><td class="note" style="max-width:420px;overflow-wrap:anywhere">${esc(String(x.detalhe||"").slice(0,200))}</td></tr>`).join("")||'<tr><td colspan="4" class="empty">Nenhuma execução registrada ainda.</td></tr>'}</tbody></table></div></div>`;
   const b=$("#cInit"); if(b)b.onclick=async()=>{ b.disabled=true; const m=$("#cInitMsg"); m.textContent="Carregando…"; try{ const r=await API("POST","/admin/inicializar"); m.className="msg ok"; m.textContent=`Pronto: ${r.catalogo} itens de catálogo, ${r.sla} prioridades, ${r.setores} setores, ${r.feriados} feriados.`; await chInit(); setTimeout(rConfig,1200); }catch(e){ b.disabled=false; m.className="msg err"; m.textContent=e.userMsg||e.message; } };
 }
