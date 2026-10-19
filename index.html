@@ -1543,6 +1543,7 @@ async function bootDev(){
 
 /* ============ Sistema de chamados (versão com API + banco de dados) ============ */
 const CH={catalog:[], sla:{}, setores:[], equipe:[], me:null, isTI:false, isAdmin:false, configurado:false, items:null, itemsAt:0, initErr:null};
+window.CH=CH;   // goTab (portal.html) consulta window.CH para mostrar a barra de filtros à equipe de TI; const no topo não vira propriedade de window
 const ST_ALL=["Novo","Em atendimento","Aguardando usuário","Resolvido","Fechado","Cancelado"];
 const PRIOS=["P1 Crítica","P2 Alta","P3 Média","P4 Baixa"];
 let CAUSAS=["Hardware","Software","Configuração","Acesso/permissão","Usuário/treinamento","Fornecedor","Rede","Outro"];
