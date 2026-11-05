@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="strict-origin-when-cross-origin">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://alcdn.msauth.net https://unpkg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src 'self' data: blob:; connect-src 'self' https://login.microsoftonline.com https://func-chamados-ti.azurewebsites.net ; frame-src https://login.microsoftonline.com; base-uri 'self'; form-action 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://alcdn.msauth.net https://unpkg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src 'self' data: blob:; connect-src 'self' https://login.microsoftonline.com https://func-chamados-ti.azurewebsites.net ; frame-src https://login.microsoftonline.com https://multiplanoengenharia1.sharepoint.com; base-uri 'self'; form-action 'self'">
 <title>Portal de Chamados de T.I · Multiplano</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -479,6 +479,30 @@ code{font-size:12px;background:var(--surface-2);padding:1px 5px;border-radius:4p
 .anx{display:grid;gap:6px}
 .anx-list{list-style:none;margin:0;padding:0;display:grid;gap:4px}
 .anx-list li{font-size:13.5px;overflow-wrap:anywhere}
+/* ---- Boas-vindas e tour ---- */
+.bv-fundo{position:fixed;inset:0;z-index:75;background:rgba(5,15,35,.55);display:grid;place-items:center;padding:max(16px,env(safe-area-inset-top,0px)) 16px;overflow:auto}
+.bv-caixa{width:min(680px,100%);background:var(--surface);color:var(--ink);border-radius:14px;padding:22px;box-shadow:0 12px 40px rgba(0,0,0,.3);outline:none}
+.bv-caixa h2{font-family:var(--f-display);font-size:21px;margin:0 0 6px}
+.bv-caixa>p{margin:0 0 14px;color:var(--muted)}
+.bv-video{aspect-ratio:16/9;border-radius:10px;overflow:hidden;background:var(--surface-2)}
+.bv-video iframe{width:100%;height:100%;border:0;display:block}
+.bv-caixa .bv-link{margin:8px 0 0;font-size:13px}
+.bv-link a{color:var(--blue)}
+.bv-botoes{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end;margin-top:16px}
+.tour-fundo{position:fixed;inset:0;z-index:76;background:rgba(5,15,35,.55)}
+.tour-fundo.com-foco{background:transparent}
+.tour-foco{position:fixed;z-index:77;border-radius:10px;pointer-events:none;box-shadow:0 0 0 3px var(--orange),0 0 0 100vmax rgba(5,15,35,.55)}
+.tour-cartao{position:fixed;z-index:78;width:min(360px,calc(100vw - 24px));background:var(--surface);color:var(--ink);border-radius:12px;padding:16px;box-shadow:0 10px 32px rgba(0,0,0,.35);outline:none}
+.tour-cartao.centro{left:50%!important;top:50%!important;transform:translate(-50%,-50%)}
+.tour-cartao h2{font-family:var(--f-display);font-size:17px;margin:2px 0 6px}
+.tour-cartao p{margin:0 0 14px;font-size:14px;line-height:1.45}
+.tour-passo{color:var(--muted);font-size:12px}
+.tour-botoes{display:flex;gap:6px;align-items:center}
+.tour-botoes span{flex:1}
+@media (max-width:640px){
+  .bv-botoes .btn{flex:1 1 100%}
+  .tour-cartao,.tour-cartao.centro{left:12px!important;right:12px;top:auto!important;bottom:calc(12px + env(safe-area-inset-bottom,0px));width:auto;transform:none}
+}
 
 </style>
 </head>
@@ -495,7 +519,7 @@ code{font-size:12px;background:var(--surface-2);padding:1px 5px;border-radius:4p
     <div class="srcbox">
       <div class="srcpill" id="srcPill" title=""><i class="dot" id="srcDot"></i><span id="srcText">Carregando…</span></div>
       <button class="btn-band" id="btnRefresh" type="button">Atualizar agora</button>
-      <div class="userbox" id="userBox" hidden><span id="userName"></span><button type="button" id="btnLogout">Sair</button></div>
+      <div class="userbox" id="userBox" hidden><span id="userName"></span><button type="button" id="btnAjuda" aria-haspopup="dialog">Ajuda</button><button type="button" id="btnLogout">Sair</button></div>
     </div>
   </div>
 </header>
@@ -1632,7 +1656,9 @@ async function chAfterLogin(acc){
   if(CH.isTI){ try{ await chLoadIndicators(); }catch(e){ S.src.error=e.userMsg||e.message; renderSource(); } startWebTimer(); }
   goTab(tab);
   const lk=new URLSearchParams(location.search).get("chamado");
-  if(lk&&/^\d+$/.test(lk)){ chOpen(+lk,CH.isTI?"ti":"user"); history.replaceState(null,"",location.pathname+location.hash); }
+  const porLink=!!lk&&/^\d+$/.test(lk);
+  if(porLink){ chOpen(+lk,CH.isTI?"ti":"user"); history.replaceState(null,"",location.pathname+location.hash); }
+  bvAoEntrar(porLink);
 }
 function chIngest(items){
   if(!items.length){ Object.assign(S.src,{type:"lists",name:"Banco de dados do portal",readAt:new Date(),error:null}); renderSource(); return; }   // banco ainda sem chamados
@@ -2218,13 +2244,14 @@ async function cfgSituacao(el){
   el.innerHTML=`${!CH.configurado?`<div class="callout info" style="margin-bottom:14px"><b>Primeiro passo:</b> carregue o catálogo, os prazos, os setores e os feriados padrão. Depois ajuste nas outras abas. <div style="margin-top:10px"><button class="btn org" type="button" id="cInit">Inicializar cadastros</button> <span class="msg" id="cInitMsg"></span></div></div>`:""}
     <div class="cfg-grid">
       <div class="card"><h3>Banco de dados</h3><p>${okPill(s.banco==="ok","Conectado","Com problema")} <span class="note">${esc(s.dados||"")} · API ${esc(s.versao)}</span></p>
-        <dl class="dl"><dt>Chamados</dt><dd>${fmtN(total)}</dd>${ST_ALL.filter(x=>cc[x]).map(x=>`<dt>${x}</dt><dd>${fmtN(cc[x])}</dd>`).join("")}<dt>Catálogo</dt><dd>${fmtN(s.cadastros.catalogo)} itens</dd><dt>Setores</dt><dd>${fmtN(s.cadastros.setores)}</dd><dt>Feriados</dt><dd>${fmtN(s.cadastros.feriados)}</dd></dl></div>
+        <dl class="dl"><dt>Chamados</dt><dd>${fmtN(total)}</dd>${ST_ALL.filter(x=>cc[x]).map(x=>`<dt>${x}</dt><dd>${fmtN(cc[x])}</dd>`).join("")}<dt>Catálogo</dt><dd>${fmtN(s.cadastros.catalogo)} itens</dd><dt>Setores</dt><dd>${fmtN(s.cadastros.setores)}</dd><dt>Feriados</dt><dd>${fmtN(s.cadastros.feriados)}</dd></dl>${CH.isAdmin?`<div style="margin-top:12px"><button class="btn" type="button" id="cEstrutura">Atualizar estrutura</button><p class="note" style="margin:6px 0 0">Cria as listas e colunas que faltam. Não altera cadastros nem chamados.</p><p class="msg" id="cEstruturaMsg" role="status"></p></div>`:""}</div>
       <div class="card"><h3>Integrações</h3><dl class="dl"><dt>E-mail</dt><dd>${okPill(ig.email,"Configurado","Falta MAIL_REMETENTE")}</dd><dt>Teams</dt><dd>${okPill(ig.teams,"Configurado","Falta TEAMS_WEBHOOK_URL")}</dd><dt>Anexos e backup</dt><dd>${okPill(ig.armazenamento,"Configurado","Não configurado")}</dd><dt>Link nos e-mails</dt><dd>${okPill(ig.portal,"Configurado","Falta PORTAL_URL")}</dd></dl>
         <p class="note" style="margin-top:10px">Configuradas nas variáveis da Function App (guia de produção).</p></div>
       <div class="card"><h3>Notificações</h3><dl class="dl"><dt>Enviadas</dt><dd>${fmtN(nc.enviada||0)}</dd><dt>Na fila</dt><dd>${fmtN(nc.pendente||0)}</dd><dt>Com erro</dt><dd>${nc.erro?`<b style="color:var(--bad)">${fmtN(nc.erro)}</b>`:"0"}</dd><dt>Ignoradas</dt><dd>${fmtN(nc.ignorada||0)} <span class="note">(integração não configurada)</span></dd></dl></div>
     </div>
     <div class="card" style="margin-top:14px"><h3>Rotinas automáticas</h3><p class="sub">Notificações a cada 5 min · resumo de prazos 8h30 (seg–sex) · fechamento automático 7h · backup 2h</p>
       <div class="tw"><table><thead><tr><th>Rotina</th><th>Início</th><th>Resultado</th><th>Detalhe</th></tr></thead><tbody>${(s.execucoes||[]).map(x=>`<tr><td>${esc(x.rotina)}</td><td class="num">${fmtDT(x.inicio)}</td><td>${x.ok==null?'<span class="pill p-neu">em execução</span>':okPill(x.ok,"ok","falhou")}</td><td class="note" style="max-width:420px;overflow-wrap:anywhere">${esc(String(x.detalhe||"").slice(0,200))}</td></tr>`).join("")||'<tr><td colspan="4" class="empty">Nenhuma execução registrada ainda.</td></tr>'}</tbody></table></div></div>`;
+  const be=$("#cEstrutura"); if(be)be.onclick=async()=>{ be.disabled=true; const m=$("#cEstruturaMsg"); m.className="msg"; m.textContent="Atualizando…"; try{ const r=await API("POST","/admin/atualizar-estrutura"); m.className="msg ok"; m.textContent=r.criados.length?`Criado: ${r.criados.join(", ")}.`:"Nada a criar: a estrutura já está completa."; }catch(e){ m.className="msg err"; m.textContent=e.userMsg||e.message; }finally{ be.disabled=false; } };
   const b=$("#cInit"); if(b)b.onclick=async()=>{ b.disabled=true; const m=$("#cInitMsg"); m.textContent="Carregando…"; try{ const r=await API("POST","/admin/inicializar"); m.className="msg ok"; m.textContent=`Pronto: ${r.catalogo} itens de catálogo, ${r.sla} prioridades, ${r.setores} setores, ${r.feriados} feriados.`; await chInit(); setTimeout(rConfig,1200); }catch(e){ b.disabled=false; m.className="msg err"; m.textContent=e.userMsg||e.message; } };
 }
 async function cfgCatalogo(el){
@@ -2290,7 +2317,7 @@ async function cfgUsuarios(el){
   const lista=await API("GET","/admin/usuarios");
   const rot={admin:"Administrador",tecnico:"Técnico",usuario:"Colaborador"};
   el.innerHTML=`<div class="callout info" style="margin-bottom:14px"><b>Os papéis são definidos no Entra ID</b>, não aqui: Entra › Aplicativos empresariais › Portal Indicadores Chamados TI › Usuários e grupos › atribuir o papel <b>Chamados.Admin</b> ou <b>Chamados.Tecnico</b>. A pessoa precisa sair e entrar de novo no portal. Quem não tem papel é colaborador.<br>Um técnico só aparece para atribuição depois do primeiro acesso ao portal.</div>
-    <div class="tw"><table><thead><tr><th>Nome</th><th>E-mail</th><th>Papel</th><th>Último acesso</th><th>Ativo para atribuição</th></tr></thead><tbody>${lista.map(u=>`<tr><td>${esc(u.nome)}</td><td>${esc(u.email)}</td><td>${rot[u.papel]||u.papel}</td><td class="num">${u.ultimo_acesso?fmtDT(u.ultimo_acesso):"–"}</td><td>${u.papel==="usuario"?"–":`<input type="checkbox" data-ua="${u.id}" ${u.ativo?"checked":""}>`}</td></tr>`).join("")}</tbody></table></div><p class="msg" id="cuMsg" role="status"></p>`;
+    <div class="tw"><table><thead><tr><th>Nome</th><th>E-mail</th><th>Papel</th><th>Último acesso</th><th>Tutorial</th><th>Ativo para atribuição</th></tr></thead><tbody>${lista.map(u=>`<tr><td>${esc(u.nome)}</td><td>${esc(u.email)}</td><td>${rot[u.papel]||u.papel}</td><td class="num">${u.ultimo_acesso?fmtDT(u.ultimo_acesso):"–"}</td><td>${tutorialRotulo(u.tutorial_versao,tutorialAtual().versaoAtual)}</td><td>${u.papel==="usuario"?"–":`<input type="checkbox" data-ua="${u.id}" ${u.ativo?"checked":""}>`}</td></tr>`).join("")}</tbody></table></div><p class="msg" id="cuMsg" role="status"></p>`;
   el.querySelectorAll("[data-ua]").forEach(c=>c.onchange=async()=>{ const m=$("#cuMsg"); try{ await API("PUT",`/admin/usuarios/${c.dataset.ua}`,{ativo:c.checked}); await chInit(); m.className="msg ok"; m.textContent="Salvo."; }catch(e){ m.className="msg err"; m.textContent=e.userMsg||e.message; } });
 }
 async function cfgHistorico(el){
@@ -2327,6 +2354,186 @@ function historicoParaApi(rows){
       resolvido_em:r.cc&&st==="Fechado"?at(r.cc,12,0):null,fechado_em:r.cc&&(st==="Fechado"||st==="Cancelado")?at(r.cc,12,0):null,resolucao:r.resolucao||"",codigo_origem:r.raw&&r.raw.tipo?("Tipo antigo: "+r.raw.tipo):""}; });
 }
 window.CH_TABS={abrir:rAbrir,meus:rMeus,fila:rFila,config:rConfig};
+
+/* ---------- Boas-vindas, tour guiado e Ajuda ----------
+   A API decide se a boas-vindas abre (bootstrap.tutorial.mostrar), com a versão e o vídeo das configurações da Function App.
+   Para criar o tour da equipe de TI: acrescente TOURS.ti e devolva-o em tourDoPerfil(). */
+const TOURS={
+  colaborador:[
+    {aba:"abrir",alvo:'.tab[data-tab="abrir"]',titulo:"Abrir um chamado",texto:"Tudo começa aqui. Use esta aba sempre que precisar de ajuda da TI."},
+    {aba:"abrir",alvo:"#chAbrir .areas",titulo:"Escolha o assunto",texto:"Clique na área do seu problema e depois no assunto. O portal faz as perguntas certas para a TI atender mais rápido."},
+    {aba:"meus",pronto:"#chMeus .meus-head",alvo:'.tab[data-tab="meus"]',titulo:"Meus chamados",texto:"Aqui você acompanha o andamento de todos os seus pedidos e conversa com a TI."},
+    {aba:"meus",pronto:"#chMeus .meus-head",alvo:"#chMeus .blk",titulo:"Precisa da sua ação",texto:"Os chamados que esperam uma resposta sua aparecem aqui, em primeiro lugar.",
+      semAlvo:"Quando a TI precisar de uma resposta sua, o chamado aparece em Meus chamados, na seção “Precisa da sua ação”."},
+    {aba:"meus",pronto:"#chMeus .meus-head",alvo:tourAlvoResolvido,titulo:"Confirme a solução e avalie",texto:"Abra este chamado para confirmar se ficou resolvido e dar uma nota ao atendimento.",
+      semAlvo:"Quando a TI resolver o seu pedido, abra o chamado, confirme se ficou resolvido e dê uma nota ao atendimento."},
+  ],
+};
+const tourDoPerfil=()=>TOURS.colaborador;
+
+function tourAlvoResolvido(){
+  const f=(CH.mine||[]).find(x=>x.Status==="Resolvido");
+  return f?document.querySelector(`#chMeus .blk .tk[data-id="${f.id}"]`):null;
+}
+
+const tutorialAtual=()=>(CH.boot&&CH.boot.tutorial)||{};
+async function tutorialMarcar(){
+  const t=tutorialAtual();
+  if(!t.versaoAtual||t.versaoVista>=t.versaoAtual)return;
+  try{ CH.boot.tutorial=await API("POST","/eu/tutorial",{versao:t.versaoAtual}); }
+  catch(e){ console.warn("Não foi possível registrar o tutorial como visto:",e.userMsg||e.message); }   // a boas-vindas volta no próximo acesso
+}
+function tutorialRotulo(vista,atual){
+  const v=Number(vista)||0;
+  return v>0&&v>=(atual||0)?"Visto ou dispensado":v>0?"Versão anterior":"Pendente";
+}
+
+function focaveis(c){ return [...c.querySelectorAll("a[href],button:not([disabled]),iframe")].filter(el=>el.offsetParent!==null); }
+function prenderFoco(e,c){
+  if(e.key!=="Tab")return;
+  const f=focaveis(c); if(!f.length){ e.preventDefault(); c.focus(); return; }
+  const prim=f[0], ult=f[f.length-1], at=document.activeElement;
+  if(!c.contains(at)||(e.shiftKey&&(at===prim||at===c))||(!e.shiftKey&&at===ult)){ e.preventDefault(); (e.shiftKey?ult:prim).focus(); }
+}
+document.addEventListener("keydown",e=>{
+  const c=TOUR.ativo?$("#tourCartao"):$("#bvCaixa");
+  if(!c)return;
+  if(e.key==="Escape"){ e.preventDefault(); e.stopPropagation(); if(TOUR.ativo)tourFechar(); else bvFechar(); return; }
+  prenderFoco(e,c);
+},true);
+
+/* ---------- Modal ---------- */
+function bvAbrir(ajuda){
+  bvFechar();
+  const url=tutorialAtual().videoUrl;
+  const convite=url?(ajuda?"Reveja o vídeo ou refaça o tour quando quiser.":"Assista ao vídeo e conheça o portal, ou faça o tour pela tela."):"Faça um tour rápido e veja como abrir e acompanhar seus chamados.";
+  const botoes=ajuda?`<button type="button" class="btn" data-bv="fechar">Fechar</button>`
+    :`<button type="button" class="btn" data-bv="dispensar">Não mostrar de novo</button><button type="button" class="btn" data-bv="fechar">${url?"Assistir depois":"Deixar para depois"}</button>`;
+  const el=document.createElement("div");
+  el.id="bvModal"; el.className="bv-fundo";
+  el.innerHTML=`<div class="bv-caixa" id="bvCaixa" role="dialog" aria-modal="true" aria-labelledby="bvTitulo" aria-describedby="bvTexto" tabindex="-1">
+    <h2 id="bvTitulo">${ajuda?"Ajuda":"Boas-vindas ao portal de chamados"}</h2>
+    <p id="bvTexto">${convite}</p>
+    ${url?`<div class="bv-video"><iframe src="${esc(url)}" title="Vídeo tutorial do portal" allow="fullscreen" allowfullscreen loading="lazy"></iframe></div><p class="bv-link"><a href="${esc(url)}" target="_blank" rel="noopener">Abrir o vídeo em nova aba</a></p>`:""}
+    <div class="bv-botoes"><button type="button" class="btn org" data-bv="tour">Fazer o tour guiado</button>${botoes}</div>
+  </div>`;
+  el.querySelectorAll("[data-bv]").forEach(b=>b.onclick=()=>{
+    const a=b.dataset.bv;
+    if(a==="tour")tourIniciar();
+    else{ bvFechar(); if(a==="dispensar")tutorialMarcar(); }
+  });
+  BV_RETORNO=document.activeElement;
+  document.body.appendChild(el);
+  $("#bvCaixa").focus();
+}
+let BV_RETORNO=null;
+function bvFechar(){
+  const el=$("#bvModal"); if(!el)return;
+  el.remove();
+  if(!TOUR.ativo&&BV_RETORNO&&BV_RETORNO.isConnected&&BV_RETORNO!==document.body)BV_RETORNO.focus();
+}
+/* Depois do login. Quem chega por link de um chamado vai direto a ele: a boas-vindas fica para o próximo acesso. */
+function bvAoEntrar(veioPorLink){ if(tutorialAtual().mostrar&&CH.configurado&&!veioPorLink)bvAbrir(false); }
+document.addEventListener("click",e=>{ if(e.target.closest("#btnAjuda"))bvAbrir(true); });
+
+/* ---------- Tour ---------- */
+const TOUR={ativo:false,passos:[],i:-1,turno:0,alvo:null,aba:null,y:0,retorno:null,raf:0};
+const tourNoCelular=()=>matchMedia("(max-width:640px)").matches;
+function tourVisivel(el){ if(!el)return false; const r=el.getBoundingClientRect(); return r.width>0&&r.height>0&&getComputedStyle(el).visibility!=="hidden"; }
+function tourAlvo(p){ const el=typeof p.alvo==="function"?p.alvo():document.querySelector(p.alvo); return tourVisivel(el)?el:null; }
+async function tourAguardar(seletor,ms){ const fim=Date.now()+ms; while(!document.querySelector(seletor)&&Date.now()<fim)await new Promise(r=>setTimeout(r,60)); }
+
+function tourIniciar(){
+  if(TOUR.ativo)return;
+  const retorno=BV_RETORNO;
+  Object.assign(TOUR,{ativo:true,passos:[],i:-1,alvo:null,aba:S.tab,y:window.scrollY,retorno});
+  bvFechar(); chClose();
+  const el=document.createElement("div");
+  el.id="tourCamada";
+  el.innerHTML=`<div class="tour-fundo" id="tourFundo"></div><div class="tour-foco" id="tourFoco" hidden></div>
+    <div class="tour-cartao centro" id="tourCartao" role="dialog" aria-modal="true" aria-labelledby="tourTitulo" aria-describedby="tourTexto" tabindex="-1">
+      <small id="tourPasso" class="tour-passo"></small><h2 id="tourTitulo">Preparando o tour…</h2><p id="tourTexto"></p>
+      <div class="tour-botoes"><button type="button" class="btn" id="tourSair">Sair</button><span></span><button type="button" class="btn" id="tourAnterior" disabled>Anterior</button><button type="button" class="btn org" id="tourProximo" disabled>Próximo</button></div>
+    </div>`;
+  document.body.appendChild(el);
+  $("#tourSair").onclick=tourFechar;
+  $("#tourAnterior").onclick=()=>tourIr(TOUR.i-1,-1);
+  $("#tourProximo").onclick=()=>tourIr(TOUR.i+1,1);
+  addEventListener("resize",tourAgendar); addEventListener("scroll",tourAgendar,true);
+  $("#tourCartao").focus();
+  tourComecar();
+}
+async function tourPreparar(p){ if(S.tab!==p.aba)goTab(p.aba); if(p.pronto)await tourAguardar(p.pronto,4000); }
+/* Visita as telas antes do primeiro passo para contar só o que vai aparecer. "turno" descarta a busca se a pessoa clicar de novo ou sair durante a espera. */
+async function tourComecar(){
+  const turno=++TOUR.turno, ficam=[];
+  for(const p of tourDoPerfil()){
+    await tourPreparar(p);
+    if(!TOUR.ativo||turno!==TOUR.turno)return;
+    if(p.semAlvo||tourAlvo(p))ficam.push(p);
+  }
+  TOUR.passos=ficam;
+  tourIr(0,1);
+}
+async function tourIr(i,dir){
+  const turno=++TOUR.turno;
+  while(i>=0&&i<TOUR.passos.length){
+    const p=TOUR.passos[i];
+    await tourPreparar(p);
+    if(!TOUR.ativo||turno!==TOUR.turno)return;
+    const alvo=tourAlvo(p);
+    if(alvo||p.semAlvo){ tourMostrar(p,alvo,i); return; }
+    TOUR.passos.splice(i,1);   // sumiu depois da contagem: sai da lista para a numeração não saltar
+    if(dir<0)i--;
+  }
+  if(dir>0)tourConcluir(); else tourIr(0,1);
+}
+function tourMostrar(p,alvo,i){
+  TOUR.i=i; TOUR.alvo=alvo;
+  $("#tourPasso").textContent=`Passo ${i+1} de ${TOUR.passos.length}`;
+  $("#tourTitulo").textContent=p.titulo;
+  $("#tourTexto").textContent=alvo?p.texto:p.semAlvo;
+  $("#tourAnterior").disabled=i===0;
+  $("#tourProximo").disabled=false;
+  $("#tourProximo").textContent=i===TOUR.passos.length-1?"Concluir":"Próximo";
+  if(alvo)tourEnquadrar(alvo);
+  tourPosicionar();
+  $("#tourCartao").focus();
+}
+function tourEnquadrar(el){
+  el.scrollIntoView({block:"nearest",inline:"center",behavior:"instant"});
+  const dock=document.querySelector(".dock");
+  if(dock&&dock.contains(el))return;   // as abas ficam fixas no topo
+  const topo=(dock?dock.getBoundingClientRect().bottom:0)+12, base=innerHeight-12-(tourNoCelular()?$("#tourCartao").offsetHeight:0), r=el.getBoundingClientRect();
+  if(r.top<topo||r.bottom>base)window.scrollBy({top:r.top-topo,behavior:"instant"});
+}
+function tourAgendar(){ cancelAnimationFrame(TOUR.raf); TOUR.raf=requestAnimationFrame(tourPosicionar); }
+function tourPosicionar(){
+  if(!TOUR.ativo||TOUR.i<0)return;
+  const foco=$("#tourFoco"), cartao=$("#tourCartao"), fundo=$("#tourFundo");
+  if(TOUR.alvo&&!TOUR.alvo.isConnected)TOUR.alvo=tourAlvo(TOUR.passos[TOUR.i]);   // a lista pode ter sido redesenhada
+  const alvo=TOUR.alvo;
+  foco.hidden=!alvo; fundo.classList.toggle("com-foco",!!alvo); cartao.classList.toggle("centro",!alvo);
+  cartao.style.left=cartao.style.top="";
+  if(!alvo)return;
+  const r=alvo.getBoundingClientRect(), topo=Math.max(r.top,0), base=Math.min(r.bottom,innerHeight);
+  Object.assign(foco.style,{left:r.left-5+"px",top:topo-5+"px",width:r.width+10+"px",height:Math.max(base-topo,0)+10+"px"});
+  if(tourNoCelular())return;
+  const a=cartao.offsetHeight, l=cartao.offsetWidth, cabeAbaixo=base+16+a<innerHeight;
+  cartao.style.top=(cabeAbaixo?base+16:Math.max(12,topo-16-a))+"px";
+  cartao.style.left=Math.min(Math.max(12,r.left),innerWidth-l-12)+"px";
+}
+function tourFechar(){
+  if(!TOUR.ativo)return;
+  TOUR.ativo=false; TOUR.turno++; cancelAnimationFrame(TOUR.raf);
+  removeEventListener("resize",tourAgendar); removeEventListener("scroll",tourAgendar,true);
+  const el=$("#tourCamada"); if(el)el.remove();
+  if(S.tab!==TOUR.aba)goTab(TOUR.aba);
+  window.scrollTo({top:TOUR.y,behavior:"instant"});
+  const volta=TOUR.retorno;
+  if(volta&&volta.isConnected&&volta!==document.body)volta.focus();
+}
+function tourConcluir(){ tourFechar(); tutorialMarcar(); }
 
 /* ============ Início ============ */
 async function boot(){
